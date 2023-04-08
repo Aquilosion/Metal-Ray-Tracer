@@ -86,9 +86,9 @@
 		E13EEDF629D98C280030A817 /* Ray Tracer */ = {
 			isa = PBXGroup;
 			children = (
+				E1227FDA29D9AE3B00758F85 /* Geometry */,
 				E13EEDF729D98C280030A817 /* AppDelegate.swift */,
 				E13EEDF929D98C280030A817 /* ViewController.swift */,
-				E1227FDA29D9AE3B00758F85 /* Geometry */,
 				E1227FCC29D9A67C00758F85 /* SceneDetails.swift */,
 				E13EEE0629D9931A0030A817 /* RayTrace.metal */,
 				E1227FC529D9A29000758F85 /* Scene.scn */,

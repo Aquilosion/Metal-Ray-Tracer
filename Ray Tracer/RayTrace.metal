@@ -42,6 +42,7 @@ struct HitInfo {
 	float3   position;
 	float3   normal;
 	Material material;
+	uint     index;
 };
 
 float random(thread uint &seed) {
@@ -73,7 +74,7 @@ float2 randomPointInCircle(thread uint &seed) {
 	return pointOnCircle * sqrt(random(seed));
 }
 
-HitInfo raySphereIntersection(Ray ray, Sphere sphere) {
+HitInfo raySphereIntersection(Ray ray, Sphere sphere, bool insideSphere) {
 	float3 offsetRayOrigin = ray.origin - sphere.position;
 	
 	float a = dot(ray.direction, ray.direction);
@@ -85,8 +86,8 @@ HitInfo raySphereIntersection(Ray ray, Sphere sphere) {
 	HitInfo hitInfo;
 	hitInfo.distance = INFINITY;
 	
-	if (discriminant >= 0) {
-		float distance = (-b - sqrt(discriminant)) / (2 * a);
+	if (discriminant > 0) {
+		float distance = (-b + mix(-1.0, 1.0, insideSphere) * sqrt(discriminant)) / (2 * a);
 		
 		if (distance >= 0) {
 			hitInfo.distance = distance;
@@ -99,14 +100,15 @@ HitInfo raySphereIntersection(Ray ray, Sphere sphere) {
 	return hitInfo;
 }
 
-HitInfo hitTest(Ray ray, Scene scene) {
+HitInfo hitTest(Ray ray, Scene scene, thread bool *insideSphere) {
 	HitInfo closest;
 	closest.distance = INFINITY;
 	
 	for (uint i = 0; i < scene.sphereCount; ++i) {
-		HitInfo hitInfo = raySphereIntersection(ray, scene.spheres[i]);
+		HitInfo hitInfo = raySphereIntersection(ray, scene.spheres[i], insideSphere[i]);
 		
 		if (hitInfo.distance < closest.distance) {
+			hitInfo.index = i;
 			closest = hitInfo;
 		}
 	}
@@ -136,13 +138,24 @@ float3 environmentColor(float3 direction) {
 float3 traceRay(Ray ray, Scene scene, thread uint &seed) {
 	float3 incomingColor = 0;
 	float3 rayColor = 1;
+	float currentRefractiveIndex = 1;
+	
+	const float materialRefractiveIndex = 1.6;
+	
+	bool insideSphere[128] = { false };
 	
 	for (uint i = 0; i < 8; ++i) {
-		HitInfo hit = hitTest(ray, scene);
+		HitInfo hit = hitTest(ray, scene, insideSphere);
 		
 		if (hit.distance == INFINITY) {
 			incomingColor += environmentColor(ray.direction) * rayColor;
 			break;
+		}
+		
+		bool isExteriorHit = !insideSphere[hit.index];
+		
+		if (!isExteriorHit) {
+			hit.normal = -hit.normal;
 		}
 		
 		ray.origin = hit.position;
@@ -150,12 +163,27 @@ float3 traceRay(Ray ray, Scene scene, thread uint &seed) {
 		float3 diffuseDirection = normalize(hit.normal + randomDirection(seed));
 		float3 specularDirection = reflect(ray.direction, hit.normal);
 		
-		bool isSpecularBounce = random(seed) < 0.2;
+		float refractionChange = mix(materialRefractiveIndex / currentRefractiveIndex, currentRefractiveIndex / materialRefractiveIndex, isExteriorHit);
+		float3 transparencyDirection = refract(ray.direction, hit.normal, refractionChange);
 		
-		ray.direction = mix(diffuseDirection, specularDirection, hit.material.metalness * isSpecularBounce);
+		bool isSpecularBounce = random(seed) < 0.2 && isExteriorHit;
+		bool isTransparentBounce = (!isSpecularBounce && random(seed) > (dot(hit.material.opacity, 1.0) / 3.0)) || !isExteriorHit;
+		
+		ray.direction = mix(
+			mix(
+				diffuseDirection, specularDirection, hit.material.metalness * isSpecularBounce
+			),
+			transparencyDirection,
+			isTransparentBounce
+		);
 		
 		incomingColor += hit.material.emission * rayColor;
-		rayColor *= mix(hit.material.diffuse, 1, isSpecularBounce);
+		rayColor *= mix(mix(hit.material.diffuse, 1, isSpecularBounce), 1.0 - hit.material.opacity, isTransparentBounce);
+		
+		if (isTransparentBounce) {
+			currentRefractiveIndex /= refractionChange;
+			insideSphere[hit.index] = !insideSphere[hit.index];
+		}
 		
 		float sigma = 1 / 512;
 		
