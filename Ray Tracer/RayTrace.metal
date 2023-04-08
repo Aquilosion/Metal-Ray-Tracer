@@ -206,11 +206,11 @@ kernel void generateTexture(
 	scene.spheres = spheres;
 	scene.sphereCount = sphereCount;
 	
-	int sampleCount = 256;
+	int sampleCount = 16;
 	
 	float3 color = 0;
 	
-	for (int I = 0; I < sampleCount; ++I) {
+	for (int i = 0; i < sampleCount; ++i) {
 		Ray ray = projectedRay(index, projection, seed);
 		
 		color += traceRay(ray, scene, seed);
@@ -218,9 +218,13 @@ kernel void generateTexture(
 	
 	color /= sampleCount;
 	
-	float4 inColor = outputTexture.read(index);
-	float count = inColor.w + 1;
-	float4 outColor = float4((inColor.xyz * inColor.w + color) / count, count);
+	float3 outColor;
+	if (frameIndex == 0) {
+		outColor = color;
+	} else {
+		float3 inColor = outputTexture.read(index).xyz;
+		outColor = (inColor * frameIndex + color) / (float(frameIndex) + 1);
+	}
 	
-	outputTexture.write(outColor, index);
+	outputTexture.write(float4(outColor, 1), index);
 }

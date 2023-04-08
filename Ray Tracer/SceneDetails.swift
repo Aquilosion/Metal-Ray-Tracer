@@ -7,7 +7,7 @@
 
 import simd
 
-struct Projection {
+struct Projection: Equatable {
 	var size: SIMD2<Float>
 	var projection: Matrix4
 	var defocusStrength: Float

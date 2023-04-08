@@ -29,6 +29,53 @@ class ViewController: NSViewController {
 		
 		prepareRendering()
 	}
+	
+	override func viewDidAppear() {
+		view.window?.makeFirstResponder(self)
+	}
+	
+	var previousProjection: Projection?
+	
+	var cameraVelocity: SIMD3<Float> = .zero
+	
+	override func keyDown(with event: NSEvent) {
+		switch event.keyCode {
+		case 13: // W
+			cameraVelocity.z = -0.5
+			
+		case 0: // A
+			cameraVelocity.x = -0.5
+			
+		case 1: // S
+			cameraVelocity.z = 0.5
+			
+		case 2: // D
+			cameraVelocity.x = 0.5
+			
+			
+		default:
+			break
+		}
+	}
+	
+	override func keyUp(with event: NSEvent) {
+		switch event.keyCode {
+		case 13: // W
+			cameraVelocity.z = 0
+			
+		case 0: // A
+			cameraVelocity.x = 0
+			
+		case 1: // S
+			cameraVelocity.z = 0
+			
+		case 2: // D
+			cameraVelocity.x = 0
+			
+		default:
+			break
+		}
+	}
 }
 
 extension ViewController {
@@ -56,36 +103,28 @@ extension ViewController {
 	}
 	
 	private func prepareTexture() {
-		let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-			pixelFormat: renderView.colorPixelFormat,
-			width: Int(renderView.preferredDrawableSize.width),
-			height: Int(renderView.preferredDrawableSize.height),
-			mipmapped: false
-		)
+		let desiredWidth = Int(renderView.preferredDrawableSize.width)
+		let desiredHeight = Int(renderView.preferredDrawableSize.height)
 		
-		descriptor.usage = [ .shaderRead, .shaderWrite ]
+		if texture == nil || desiredWidth != texture.width || desiredHeight != texture.height {
+			let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+				pixelFormat: renderView.colorPixelFormat,
+				width: desiredWidth,
+				height: desiredHeight,
+				mipmapped: false
+			)
+			
+			descriptor.usage = [ .shaderRead, .shaderWrite ]
+			
+			texture = device.makeTexture(descriptor: descriptor)
+		}
 		
-		texture = device.makeTexture(descriptor: descriptor)
+		frameIndex = 0
 	}
 }
 
 extension ViewController: MTKViewDelegate {
 	func draw(in view: MTKView) {
-		let texture = DispatchQueue.main.sync {
-			self.texture!
-		}
-		
-		let commandBuffer = commandQueue.makeCommandBuffer()!
-		let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
-		
-		commandEncoder.setComputePipelineState(pipeline)
-		commandEncoder.setTexture(texture, index: 0)
-		
-		var frameIndex = UInt32(frameIndex)
-		
-		let frameIndexBuffer = device.makeBuffer(bytes: &frameIndex, length: MemoryLayout<UInt32>.stride)
-		commandEncoder.setBuffer(frameIndexBuffer, offset: 0, index: 0)
-		
 		let cameraNode = scene.rootNode.childNode(withName: "camera", recursively: true)!
 		let camera = cameraNode.camera!
 		
@@ -99,8 +138,35 @@ extension ViewController: MTKViewDelegate {
 		var projection = Projection(
 			size: .init(x: Float(texture.width), y: Float(texture.height)),
 			projection: viewProjection.inverse,
-			defocusStrength: 0
+			defocusStrength: 10
 		)
+		
+		var (texture, frameIndex): (MTLTexture, UInt32) = DispatchQueue.main.sync {
+			if projection != previousProjection {
+				prepareTexture()
+				previousProjection = projection
+			}
+			
+			let rotationTransform = Matrix4.rotation(about: cameraNode.simdRotation.xyz, by: cameraNode.simdRotation.w)
+			let transformedVelocity = cameraVelocity.transformed(by: rotationTransform)
+			
+			cameraNode.simdPosition += transformedVelocity
+			
+			defer {
+				self.frameIndex += 1
+			}
+			
+			return (self.texture!, UInt32(self.frameIndex))
+		}
+		
+		let commandBuffer = commandQueue.makeCommandBuffer()!
+		let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
+		
+		commandEncoder.setComputePipelineState(pipeline)
+		commandEncoder.setTexture(texture, index: 0)
+		
+		let frameIndexBuffer = device.makeBuffer(bytes: &frameIndex, length: MemoryLayout<UInt32>.stride)
+		commandEncoder.setBuffer(frameIndexBuffer, offset: 0, index: 0)
 		
 		let projectionBuffer = device.makeBuffer(bytes: &projection, length: MemoryLayout<Projection>.stride)
 		commandEncoder.setBuffer(projectionBuffer, offset: 0, index: 1)
@@ -131,7 +197,7 @@ extension ViewController: MTKViewDelegate {
 				radius: Float((node.geometry as! SCNSphere).radius),
 				material: Material(
 					diffuse: materialColor(node, \.diffuse),
-					emission: materialColor(node, \.emission),
+					emission: materialColor(node, \.emission) * 16,
 					metalness: materialColor(node, \.metalness),
 					opacity: materialColor(node, \.transparent)
 				)
@@ -188,8 +254,6 @@ extension ViewController: MTKViewDelegate {
 		commandBuffer.waitUntilCompleted()
 		
 		renderView.currentDrawable?.present()
-		
-		self.frameIndex += 1
 		
 		DispatchQueue.global().async {
 			self.renderView.draw()
