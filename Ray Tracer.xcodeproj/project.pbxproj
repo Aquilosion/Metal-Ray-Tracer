@@ -16,6 +16,7 @@
 		E1227FD829D9AD8F00758F85 /* SIMD2.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1227FD629D9AD8F00758F85 /* SIMD2.swift */; };
 		E1227FD929D9AD8F00758F85 /* SIMD3.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1227FD729D9AD8F00758F85 /* SIMD3.swift */; };
 		E1227FDC29D9BEE700758F85 /* FloatingPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1227FDB29D9BEE700758F85 /* FloatingPoint.swift */; };
+		E12A36D329E2B0670073C462 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E12A36D229E2B0670073C462 /* Renderer.swift */; };
 		E13EEDF829D98C280030A817 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E13EEDF729D98C280030A817 /* AppDelegate.swift */; };
 		E13EEDFA29D98C280030A817 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E13EEDF929D98C280030A817 /* ViewController.swift */; };
 		E13EEDFC29D98C280030A817 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E13EEDFB29D98C280030A817 /* Assets.xcassets */; };
@@ -33,6 +34,7 @@
 		E1227FD629D9AD8F00758F85 /* SIMD2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SIMD2.swift; sourceTree = "<group>"; };
 		E1227FD729D9AD8F00758F85 /* SIMD3.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SIMD3.swift; sourceTree = "<group>"; };
 		E1227FDB29D9BEE700758F85 /* FloatingPoint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FloatingPoint.swift; sourceTree = "<group>"; };
+		E12A36D229E2B0670073C462 /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		E13EEDF429D98C280030A817 /* Ray Tracer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Ray Tracer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E13EEDF729D98C280030A817 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E13EEDF929D98C280030A817 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -89,6 +91,7 @@
 				E1227FDA29D9AE3B00758F85 /* Geometry */,
 				E13EEDF729D98C280030A817 /* AppDelegate.swift */,
 				E13EEDF929D98C280030A817 /* ViewController.swift */,
+				E12A36D229E2B0670073C462 /* Renderer.swift */,
 				E1227FCC29D9A67C00758F85 /* SceneDetails.swift */,
 				E13EEE0629D9931A0030A817 /* RayTrace.metal */,
 				E1227FC529D9A29000758F85 /* Scene.scn */,
@@ -174,6 +177,7 @@
 				E1227FCF29D9AD3300758F85 /* Matrix4.swift in Sources */,
 				E1227FDC29D9BEE700758F85 /* FloatingPoint.swift in Sources */,
 				E13EEDFA29D98C280030A817 /* ViewController.swift in Sources */,
+				E12A36D329E2B0670073C462 /* Renderer.swift in Sources */,
 				E1227FCD29D9A67C00758F85 /* SceneDetails.swift in Sources */,
 				E1227FD829D9AD8F00758F85 /* SIMD2.swift in Sources */,
 				E1227FD329D9AD5000758F85 /* Float4.swift in Sources */,
