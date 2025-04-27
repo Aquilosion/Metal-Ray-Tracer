@@ -39,16 +39,16 @@ class ViewController: NSViewController {
 		Task {
 			switch event.keyCode {
 			case 13: // W
-				await renderer.setCameraVelocity(z: -0.5)
+				await renderer.setCameraVelocity(z: -0.1)
 				
 			case 0: // A
-				await renderer.setCameraVelocity(x: -0.5)
+				await renderer.setCameraVelocity(x: -0.1)
 
 			case 1: // S
-				await renderer.setCameraVelocity(z: 0.5)
+				await renderer.setCameraVelocity(z: 0.1)
 
 			case 2: // D
-				await renderer.setCameraVelocity(x: 0.5)
+				await renderer.setCameraVelocity(x: 0.1)
 
 			default:
 				break
@@ -88,6 +88,10 @@ extension ViewController {
 		
 		renderView.isPaused = true
 		renderView.enableSetNeedsDisplay = true
+		
+		if #available(macOS 14.0, *) {
+			renderView.layer!.wantsExtendedDynamicRangeContent = true
+		}
 	}
 }
 
